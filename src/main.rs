@@ -19,38 +19,35 @@ fn add(e1: &Expression, e2: &Expression) -> Option<Expression> {
 
 fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
     if e1.value == 1 || e2.value == 1 {
-        None
-    } else {
-        Some(Expression {
-            text: format!("{}*{}", e1.text, e2.text),
-            value: e1.value * e2.value,
-            contains: e1.contains + e2.contains,
-        })
+        return None;
     }
+    Some(Expression {
+        text: format!("{}*{}", e1.text, e2.text),
+        value: e1.value * e2.value,
+        contains: e1.contains + e2.contains,
+    })
 }
 
 fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
     if e2.value >= e1.value {
-        None
-    } else {
-        Some(Expression {
-            text: format!("({}-{})", e1.text, e2.text),
-            value: e1.value - e2.value,
-            contains: e1.contains + e2.contains,
-        })
+        return None;
     }
+    Some(Expression {
+        text: format!("({}-{})", e1.text, e2.text),
+        value: e1.value - e2.value,
+        contains: e1.contains + e2.contains,
+    })
 }
 
 fn divide(e1: &Expression, e2: &Expression) -> Option<Expression> {
     if e2.value == 1 || e1.value % e2.value != 0 {
-        None
-    } else {
-        Some(Expression {
-            text: format!("{}/({})", e1.text, e2.text),
-            value: e1.value / e2.value,
-            contains: e1.contains + e2.contains,
-        })
+        return None;
     }
+    Some(Expression {
+        text: format!("{}/({})", e1.text, e2.text),
+        value: e1.value / e2.value,
+        contains: e1.contains + e2.contains,
+    })
 }
 
 fn shares_dependencies(e1: &Expression, e2: &Expression) -> bool {
@@ -96,7 +93,7 @@ fn permutations(
     (result, hashes)
 }
 
-fn generate_base_expressions(numbers: &Vec<i128>) -> Vec<Expression> {
+fn generate_base(numbers: &Vec<i128>) -> Vec<Expression> {
     numbers
         .iter()
         .enumerate()
@@ -108,29 +105,25 @@ fn generate_base_expressions(numbers: &Vec<i128>) -> Vec<Expression> {
         .collect()
 }
 
-fn generate_useful_expressions(base_expressions: &Vec<Expression>) -> Vec<Expression> {
-    let mut hashes = generate_hashes(&base_expressions, &base_expressions.len());
-    let mut expression_groups = vec![Vec::new(); base_expressions.len()];
-    expression_groups[0].extend(base_expressions.clone());
-    for i in 0..base_expressions.len() {
+fn generate_useful(base: &Vec<Expression>) -> Vec<Expression> {
+    let mut hashes = generate_hashes(&base, &base.len());
+    let mut groups = vec![Vec::new(); base.len()];
+    groups[0].extend(base.clone());
+    for i in 0..base.len() {
         for j in 0..i {
-            let (perms, new_hashes) = permutations(
-                &expression_groups[j as usize],
-                &expression_groups[(i - j - 1) as usize],
-                &hashes,
-                &base_expressions.len(),
-            );
+            let (perms, new_hashes) =
+                permutations(&groups[j], &groups[i - j - 1], &hashes, &base.len());
             hashes = new_hashes;
-            expression_groups[i as usize].extend(perms);
+            groups[i as usize].extend(perms);
         }
     }
-    expression_groups.into_iter().flatten().collect()
+    groups.into_iter().flatten().collect()
 }
 
 fn find_combination(numbers: &Vec<i128>, target: &i128) -> Expression {
-    let base_expressions = generate_base_expressions(&numbers);
-    let useful_expressions = generate_useful_expressions(&base_expressions);
-    useful_expressions
+    let base = generate_base(&numbers);
+    let useful = generate_useful(&base);
+    useful
         .into_iter()
         .min_by_key(|e| (e.value - target).abs())
         .unwrap()
@@ -138,8 +131,8 @@ fn find_combination(numbers: &Vec<i128>, target: &i128) -> Expression {
 
 fn main() {
     print!("numbers: ");
-    let numbers_input: String = read!("{}\n");
-    let numbers: Vec<i128> = numbers_input
+    let input: String = read!("{}\n");
+    let numbers: Vec<i128> = input
         .trim()
         .split_whitespace()
         .map(|s| s.to_string().parse().unwrap())
