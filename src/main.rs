@@ -129,9 +129,11 @@ fn generate_useful_expressions(base_expressions: &Vec<Expression>) -> Vec<Expres
 
 fn find_combination(numbers: &Vec<i128>, target: &i128) -> Expression {
     let base_expressions = generate_base_expressions(&numbers);
-    let mut useful_expressions = generate_useful_expressions(&base_expressions);
-    useful_expressions.sort_by_key(|e| (e.value - target).abs());
-    useful_expressions[0].clone()
+    let useful_expressions = generate_useful_expressions(&base_expressions);
+    useful_expressions
+        .into_iter()
+        .min_by_key(|e| (e.value - target).abs())
+        .unwrap()
 }
 
 fn main() {
@@ -140,7 +142,7 @@ fn main() {
     let numbers: Vec<i128> = numbers_input
         .trim()
         .split_whitespace()
-        .map(|s| s.to_string().parse().expect("Invalid integer"))
+        .map(|s| s.to_string().parse().unwrap())
         .collect();
 
     print!("target: ");
