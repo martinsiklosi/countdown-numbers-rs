@@ -1,6 +1,5 @@
 use itertools::iproduct;
 use std::collections::HashSet;
-use std::option::Option;
 use text_io::read;
 
 #[derive(Clone)]
@@ -20,35 +19,38 @@ fn add(e1: &Expression, e2: &Expression) -> Option<Expression> {
 
 fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
     if e1.value == 1 || e2.value == 1 {
-        return None;
+        None
+    } else {
+        Some(Expression {
+            text: format!("{}*{}", e1.text, e2.text),
+            value: e1.value * e2.value,
+            contains: e1.contains + e2.contains,
+        })
     }
-    return Some(Expression {
-        text: format!("{}*{}", e1.text, e2.text),
-        value: e1.value * e2.value,
-        contains: e1.contains + e2.contains,
-    });
 }
 
 fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
     if e2.value >= e1.value {
-        return None;
+        None
+    } else {
+        Some(Expression {
+            text: format!("({}-{})", e1.text, e2.text),
+            value: e1.value - e2.value,
+            contains: e1.contains + e2.contains,
+        })
     }
-    return Some(Expression {
-        text: format!("({}-{})", e1.text, e2.text),
-        value: e1.value - e2.value,
-        contains: e1.contains + e2.contains,
-    });
 }
 
 fn divide(e1: &Expression, e2: &Expression) -> Option<Expression> {
     if e2.value == 1 || e1.value % e2.value != 0 {
-        return None;
+        None
+    } else {
+        Some(Expression {
+            text: format!("{}/({})", e1.text, e2.text),
+            value: e1.value / e2.value,
+            contains: e1.contains + e2.contains,
+        })
     }
-    return Some(Expression {
-        text: format!("{}/({})", e1.text, e2.text),
-        value: e1.value / e2.value,
-        contains: e1.contains + e2.contains,
-    });
 }
 
 fn shares_dependencies(e1: &Expression, e2: &Expression) -> bool {
@@ -59,9 +61,12 @@ fn generate_hash(e: &Expression, n_numbers: &usize) -> usize {
     ((e.value as usize) << n_numbers) + e.contains
 }
 
+fn generate_hashes(v: &Vec<Expression>, n_numbers: &usize) -> HashSet<usize> {
+    v.iter().map(|e| generate_hash(&e, &n_numbers)).collect()
+}
+
 fn combinations(e1: &Expression, e2: &Expression) -> Vec<Expression> {
-    let operations = [add, multiply, subtract, divide];
-    operations
+    [add, multiply, subtract, divide]
         .iter()
         .filter_map(|&operation| operation(e1, e2))
         .collect()
@@ -88,7 +93,7 @@ fn permutations(
             hashes.insert(combination_hash);
         }
     }
-    return (result, hashes);
+    (result, hashes)
 }
 
 fn generate_base_expressions(numbers: &Vec<i128>) -> Vec<Expression> {
@@ -103,14 +108,7 @@ fn generate_base_expressions(numbers: &Vec<i128>) -> Vec<Expression> {
         .collect()
 }
 
-fn generate_hashes(expressions: &Vec<Expression>, n_numbers: &usize) -> HashSet<usize> {
-    expressions
-        .iter()
-        .map(|e| generate_hash(&e, &n_numbers))
-        .collect()
-}
-
-fn generate_all_useful_expressions(base_expressions: &Vec<Expression>) -> Vec<Expression> {
+fn generate_useful_expressions(base_expressions: &Vec<Expression>) -> Vec<Expression> {
     let mut hashes = generate_hashes(&base_expressions, &base_expressions.len());
     let mut expression_groups = vec![Vec::new(); base_expressions.len()];
     expression_groups[0].extend(base_expressions.clone());
@@ -126,17 +124,14 @@ fn generate_all_useful_expressions(base_expressions: &Vec<Expression>) -> Vec<Ex
             expression_groups[i as usize].extend(perms);
         }
     }
-    return expression_groups
-        .into_iter()
-        .flat_map(|v| v.into_iter())
-        .collect();
+    expression_groups.into_iter().flatten().collect()
 }
 
 fn find_combination(numbers: &Vec<i128>, target: &i128) -> Expression {
     let base_expressions = generate_base_expressions(&numbers);
-    let mut useful_expressions = generate_all_useful_expressions(&base_expressions);
+    let mut useful_expressions = generate_useful_expressions(&base_expressions);
     useful_expressions.sort_by_key(|e| (e.value - target).abs());
-    return useful_expressions[0].clone();
+    useful_expressions[0].clone()
 }
 
 fn main() {
