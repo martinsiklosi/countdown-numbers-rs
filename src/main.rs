@@ -58,8 +58,8 @@ fn generate_hash(e: &Expression, n_numbers: &usize) -> usize {
     ((e.value as usize) << n_numbers) + e.contains
 }
 
-fn generate_hashes(v: &Vec<Expression>, n_numbers: &usize) -> HashSet<usize> {
-    v.iter().map(|e| generate_hash(&e, &n_numbers)).collect()
+fn generate_hashes(v: &[Expression], n_numbers: &usize) -> HashSet<usize> {
+    v.iter().map(|e| generate_hash(e, n_numbers)).collect()
 }
 
 fn combinations(e1: &Expression, e2: &Expression) -> Vec<Expression> {
@@ -76,7 +76,7 @@ fn permutations(
     n_numbers: &usize,
 ) -> (Vec<Expression>, HashSet<usize>) {
     let mut result = Vec::new();
-    let mut hashes = hashes.clone();
+    let mut hashes = hashes.to_owned();
     for (e1, e2) in iproduct!(v1, v2) {
         if shares_dependencies(e1, e2) {
             continue;
@@ -93,7 +93,7 @@ fn permutations(
     (result, hashes)
 }
 
-fn generate_base(numbers: &Vec<i128>) -> Vec<Expression> {
+fn generate_base(numbers: &[i128]) -> Vec<Expression> {
     numbers
         .iter()
         .enumerate()
@@ -105,23 +105,23 @@ fn generate_base(numbers: &Vec<i128>) -> Vec<Expression> {
         .collect()
 }
 
-fn generate_useful(base: &Vec<Expression>) -> Vec<Expression> {
-    let mut hashes = generate_hashes(&base, &base.len());
+fn generate_useful(base: &[Expression]) -> Vec<Expression> {
+    let mut hashes = generate_hashes(base, &base.len());
     let mut groups = vec![Vec::new(); base.len()];
-    groups[0].extend(base.clone());
+    groups[0].extend(base.to_owned());
     for i in 0..base.len() {
         for j in 0..i {
             let (perms, new_hashes) =
                 permutations(&groups[j], &groups[i - j - 1], &hashes, &base.len());
             hashes = new_hashes;
-            groups[i as usize].extend(perms);
+            groups[i].extend(perms);
         }
     }
     groups.into_iter().flatten().collect()
 }
 
-fn find_combination(numbers: &Vec<i128>, target: &i128) -> Expression {
-    let base = generate_base(&numbers);
+fn find_combination(numbers: &[i128], target: &i128) -> Expression {
+    let base = generate_base(numbers);
     let useful = generate_useful(&base);
     useful
         .into_iter()
@@ -133,7 +133,6 @@ fn main() {
     print!("numbers: ");
     let input: String = read!("{}\n");
     let numbers: Vec<i128> = input
-        .trim()
         .split_whitespace()
         .map(|s| s.to_string().parse().unwrap())
         .collect();
