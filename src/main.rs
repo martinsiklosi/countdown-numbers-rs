@@ -13,7 +13,7 @@ fn add(e1: &Expression, e2: &Expression) -> Option<Expression> {
     Some(Expression {
         text: format!("({}+{})", e1.text, e2.text),
         value: e1.value + e2.value,
-        contains: e1.contains + e2.contains,
+        contains: e1.contains | e2.contains,
     })
 }
 
@@ -24,7 +24,7 @@ fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
     Some(Expression {
         text: format!("{}*{}", e1.text, e2.text),
         value: e1.value * e2.value,
-        contains: e1.contains + e2.contains,
+        contains: e1.contains | e2.contains,
     })
 }
 
@@ -35,7 +35,7 @@ fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
     Some(Expression {
         text: format!("({}-{})", e1.text, e2.text),
         value: e1.value - e2.value,
-        contains: e1.contains + e2.contains,
+        contains: e1.contains | e2.contains,
     })
 }
 
@@ -46,7 +46,7 @@ fn divide(e1: &Expression, e2: &Expression) -> Option<Expression> {
     Some(Expression {
         text: format!("{}/({})", e1.text, e2.text),
         value: e1.value / e2.value,
-        contains: e1.contains + e2.contains,
+        contains: e1.contains | e2.contains,
     })
 }
 
@@ -83,11 +83,9 @@ fn permutations(
         }
         for combination in combinations(e1, e2) {
             let combination_hash = generate_hash(&combination, n_numbers);
-            if hashes.contains(&combination_hash) {
-                continue;
+            if hashes.insert(combination_hash) {
+                result.push(combination);
             }
-            result.push(combination);
-            hashes.insert(combination_hash);
         }
     }
     (result, hashes)
