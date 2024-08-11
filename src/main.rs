@@ -1,29 +1,56 @@
 use itertools::iproduct;
-use std::{collections::HashSet, process};
+use std::{collections::HashSet, fmt, process};
 use text_io::read;
 use thiserror::Error;
 
 #[derive(Clone)]
+enum State {
+	Add { o1: Box<State>, o2: Box<State> },
+	Multiply { o1: Box<State>, o2: Box<State> },
+	Subtract { o1: Box<State>, o2: Box<State> },
+	Divide { o1: Box<State>, o2: Box<State> },
+	Base { value: u128 },
+}
+
+impl fmt::Display for State {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			Self::Add { o1, o2 } => write!(f, "({}+{})", o1, o2),
+			Self::Multiply { o1, o2 } => write!(f, "{}*{}", o1, o2),
+			Self::Subtract { o1, o2 } => write!(f, "({}-{})", o1, o2),
+			Self::Divide { o1, o2 } => write!(f, "{}/({})", o1, o2),
+			Self::Base { value } => write!(f, "{}", value),
+		}
+	}
+}
+
+#[derive(Clone)]
 struct Expression {
-	text: String,
+	state: State,
 	value: u128,
 	contains: usize,
 }
 
 fn add(e1: &Expression, e2: &Expression) -> Option<Expression> {
 	Some(Expression {
-		text: format!("({}+{})", e1.text, e2.text),
+		state: State::Add {
+			o1: Box::new(e1.state.clone()),
+			o2: Box::new(e2.state.clone()),
+		},
 		value: e1.value + e2.value,
 		contains: e1.contains | e2.contains,
 	})
 }
 
 fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
-	if [0, 1].contains(&e1.value) || [0, 1].contains(&e1.value) {
+	if e1.value == 0 || e1.value == 1 || e2.value == 0 || e2.value == 1 {
 		return None;
 	}
 	Some(Expression {
-		text: format!("{}*{}", e1.text, e2.text),
+		state: State::Multiply {
+			o1: Box::new(e1.state.clone()),
+			o2: Box::new(e2.state.clone()),
+		},
 		value: e1.value * e2.value,
 		contains: e1.contains | e2.contains,
 	})
@@ -34,18 +61,24 @@ fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
 		return None;
 	}
 	Some(Expression {
-		text: format!("({}-{})", e1.text, e2.text),
+		state: State::Subtract {
+			o1: Box::new(e1.state.clone()),
+			o2: Box::new(e2.state.clone()),
+		},
 		value: e1.value - e2.value,
 		contains: e1.contains | e2.contains,
 	})
 }
 
 fn divide(e1: &Expression, e2: &Expression) -> Option<Expression> {
-	if [0, 1].contains(&e2.value) || e1.value % e2.value != 0 {
+	if e2.value == 0 || e2.value == 1 || e1.value % e2.value != 0 {
 		return None;
 	}
 	Some(Expression {
-		text: format!("{}/({})", e1.text, e2.text),
+		state: State::Divide {
+			o1: Box::new(e1.state.clone()),
+			o2: Box::new(e2.state.clone()),
+		},
 		value: e1.value / e2.value,
 		contains: e1.contains | e2.contains,
 	})
@@ -97,7 +130,7 @@ fn generate_base(numbers: &[u128]) -> Vec<Expression> {
 		.iter()
 		.enumerate()
 		.map(|(i, n)| Expression {
-			text: format!("{}", n),
+			state: State::Base { value: *n },
 			value: *n,
 			contains: 2_u32.pow(i as u32) as usize,
 		})
@@ -164,7 +197,10 @@ fn main() {
 		process::exit(1);
 	});
 
+	// let numbers = vec![10, 25, 50, 100, 6, 8, 2, 5];
+	// let target = 1337;
+
 	let result = find_combination(&numbers, &target);
-	println!("{} == {}", result.text, result.value);
+	println!("{} == {}", result.state, result.value);
 	println!("{} off", distance(&result.value, &target));
 }
