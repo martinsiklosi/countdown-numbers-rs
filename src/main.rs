@@ -1,6 +1,7 @@
 use itertools::iproduct;
-use std::collections::HashSet;
+use std::{collections::HashSet, process};
 use text_io::read;
+use thiserror::Error;
 
 #[derive(Clone)]
 struct Expression {
@@ -18,7 +19,7 @@ fn add(e1: &Expression, e2: &Expression) -> Option<Expression> {
 }
 
 fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
-	if e1.value == 1 || e2.value == 1 {
+	if [0, 1].contains(&e1.value) || [0, 1].contains(&e1.value) {
 		return None;
 	}
 	Some(Expression {
@@ -29,7 +30,7 @@ fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
 }
 
 fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
-	if e2.value >= e1.value {
+	if e2.value > e1.value {
 		return None;
 	}
 	Some(Expression {
@@ -40,7 +41,7 @@ fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
 }
 
 fn divide(e1: &Expression, e2: &Expression) -> Option<Expression> {
-	if e2.value == 1 || e1.value % e2.value != 0 {
+	if [0, 1].contains(&e2.value) || e1.value % e2.value != 0 {
 		return None;
 	}
 	Some(Expression {
@@ -135,16 +136,33 @@ fn find_combination(numbers: &[u128], target: &u128) -> Expression {
 		.unwrap()
 }
 
-fn main() {
+#[derive(Error, Debug)]
+#[error("Invalid input")]
+struct InputError;
+
+type UserInput = (Vec<u128>, u128);
+
+fn take_user_input() -> Result<UserInput, InputError> {
 	print!("numbers: ");
-	let input: String = read!("{}\n");
-	let numbers: Vec<u128> = input
+	let numbers_input: String = read!("{}\n");
+	let numbers = numbers_input
 		.split_whitespace()
-		.map(|s| s.to_string().parse().unwrap())
-		.collect();
+		.map(|s| s.parse::<u128>())
+		.collect::<Result<Vec<u128>, _>>()
+		.map_err(|_| InputError)?;
 
 	print!("target: ");
-	let target: u128 = read!();
+	let target_input: String = read!();
+	let target = target_input.parse::<u128>().map_err(|_| InputError)?;
+
+	Ok((numbers, target))
+}
+
+fn main() {
+	let (numbers, target) = take_user_input().unwrap_or_else(|error| {
+		println!("{}", error);
+		process::exit(1);
+	});
 
 	let result = find_combination(&numbers, &target);
 	println!("{} == {}", result.text, result.value);
