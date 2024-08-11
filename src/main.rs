@@ -19,7 +19,7 @@ fn add(e1: &Expression, e2: &Expression) -> Option<Expression> {
 }
 
 fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
-	if [0, 1].contains(&e1.value) || [0, 1].contains(&e1.value) {
+	if e1.value == 0 || e1.value == 1 || e2.value == 0 || e2.value == 1 {
 		return None;
 	}
 	Some(Expression {
@@ -41,7 +41,7 @@ fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
 }
 
 fn divide(e1: &Expression, e2: &Expression) -> Option<Expression> {
-	if [0, 1].contains(&e2.value) || e1.value % e2.value != 0 {
+	if e2.value == 0 || e2.value == 1 || e1.value % e2.value != 0 {
 		return None;
 	}
 	Some(Expression {
