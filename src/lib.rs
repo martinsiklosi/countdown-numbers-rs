@@ -150,19 +150,11 @@ fn generate_useful(base: &[Expression]) -> Vec<Expression> {
 	groups.into_iter().flatten().collect()
 }
 
-pub fn distance(x: &u128, y: &u128) -> u128 {
-	if x > y {
-		x - y
-	} else {
-		y - x
-	}
-}
-
 pub fn find_combination(numbers: &[u128], target: &u128) -> Expression {
 	let base = generate_base(numbers);
 	let useful = generate_useful(&base);
 	useful
 		.into_iter()
-		.min_by_key(|e| distance(&e.value, target))
+		.min_by_key(|e| target.abs_diff(e.value))
 		.unwrap()
 }

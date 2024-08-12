@@ -1,4 +1,4 @@
-use countdown_numbers_rs::{distance, find_combination};
+use countdown_numbers_rs::find_combination;
 use std::process;
 use text_io::read;
 use thiserror::Error;
@@ -33,5 +33,5 @@ fn main() {
 
 	let result = find_combination(&numbers, &target);
 	println!("{} == {}", result.state, result.value);
-	println!("{} off", distance(&result.value, &target));
+	println!("{} off", target.abs_diff(result.value));
 }
