@@ -192,13 +192,10 @@ fn take_user_input() -> Result<UserInput, InputError> {
 }
 
 fn main() {
-	// let (numbers, target) = take_user_input().unwrap_or_else(|error| {
-	// 	println!("{}", error);
-	// 	process::exit(1);
-	// });
-
-	let numbers = vec![10, 25, 50, 100, 6, 8, 2, 5];
-	let target = 1337;
+	let (numbers, target) = take_user_input().unwrap_or_else(|error| {
+		println!("{}", error);
+		process::exit(1);
+	});
 
 	let result = find_combination(&numbers, &target);
 	println!("{} == {}", result.state, result.value);
