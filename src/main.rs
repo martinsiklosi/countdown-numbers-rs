@@ -1,18 +1,42 @@
 use itertools::iproduct;
-use std::{collections::HashSet, process};
+use std::{collections::HashSet, fmt, process, rc::Rc};
 use text_io::read;
 use thiserror::Error;
 
 #[derive(Clone)]
+enum State {
+	Add { o1: Rc<State>, o2: Rc<State> },
+	Multiply { o1: Rc<State>, o2: Rc<State> },
+	Subtract { o1: Rc<State>, o2: Rc<State> },
+	Divide { o1: Rc<State>, o2: Rc<State> },
+	Base { value: u128 },
+}
+
+impl fmt::Display for State {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			Self::Add { o1, o2 } => write!(f, "({}+{})", o1, o2),
+			Self::Multiply { o1, o2 } => write!(f, "{}*{}", o1, o2),
+			Self::Subtract { o1, o2 } => write!(f, "({}-{})", o1, o2),
+			Self::Divide { o1, o2 } => write!(f, "{}/({})", o1, o2),
+			Self::Base { value } => write!(f, "{}", value),
+		}
+	}
+}
+
+#[derive(Clone)]
 struct Expression {
-	text: String,
+	state: Rc<State>,
 	value: u128,
 	contains: usize,
 }
 
 fn add(e1: &Expression, e2: &Expression) -> Option<Expression> {
 	Some(Expression {
-		text: format!("({}+{})", e1.text, e2.text),
+		state: Rc::new(State::Add {
+			o1: Rc::clone(&e1.state),
+			o2: Rc::clone(&e2.state),
+		}),
 		value: e1.value + e2.value,
 		contains: e1.contains | e2.contains,
 	})
@@ -23,7 +47,10 @@ fn multiply(e1: &Expression, e2: &Expression) -> Option<Expression> {
 		return None;
 	}
 	Some(Expression {
-		text: format!("{}*{}", e1.text, e2.text),
+		state: Rc::new(State::Multiply {
+			o1: Rc::clone(&e1.state),
+			o2: Rc::clone(&e2.state),
+		}),
 		value: e1.value * e2.value,
 		contains: e1.contains | e2.contains,
 	})
@@ -34,7 +61,10 @@ fn subtract(e1: &Expression, e2: &Expression) -> Option<Expression> {
 		return None;
 	}
 	Some(Expression {
-		text: format!("({}-{})", e1.text, e2.text),
+		state: Rc::new(State::Subtract {
+			o1: Rc::clone(&e1.state),
+			o2: Rc::clone(&e2.state),
+		}),
 		value: e1.value - e2.value,
 		contains: e1.contains | e2.contains,
 	})
@@ -45,7 +75,10 @@ fn divide(e1: &Expression, e2: &Expression) -> Option<Expression> {
 		return None;
 	}
 	Some(Expression {
-		text: format!("{}/({})", e1.text, e2.text),
+		state: Rc::new(State::Divide {
+			o1: Rc::clone(&e1.state),
+			o2: Rc::clone(&e2.state),
+		}),
 		value: e1.value / e2.value,
 		contains: e1.contains | e2.contains,
 	})
@@ -97,7 +130,7 @@ fn generate_base(numbers: &[u128]) -> Vec<Expression> {
 		.iter()
 		.enumerate()
 		.map(|(i, n)| Expression {
-			text: format!("{}", n),
+			state: Rc::new(State::Base { value: *n }),
 			value: *n,
 			contains: 2_u32.pow(i as u32) as usize,
 		})
@@ -159,12 +192,15 @@ fn take_user_input() -> Result<UserInput, InputError> {
 }
 
 fn main() {
-	let (numbers, target) = take_user_input().unwrap_or_else(|error| {
-		println!("{}", error);
-		process::exit(1);
-	});
+	// let (numbers, target) = take_user_input().unwrap_or_else(|error| {
+	// 	println!("{}", error);
+	// 	process::exit(1);
+	// });
+
+	let numbers = vec![10, 25, 50, 100, 6, 8, 2, 5];
+	let target = 1337;
 
 	let result = find_combination(&numbers, &target);
-	println!("{} == {}", result.text, result.value);
+	println!("{} == {}", result.state, result.value);
 	println!("{} off", distance(&result.value, &target));
 }

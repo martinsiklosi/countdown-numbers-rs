@@ -7,3 +7,6 @@ edition = "2021"
 itertools = "0.13.0"
 text_io = "0.1.12"
 thiserror = "1.0.63"
+
+[profile.release]
+debug = true
