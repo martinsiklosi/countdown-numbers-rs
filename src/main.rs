@@ -1,37 +1,18 @@
+use clap::Parser;
 use countdown::find_combination;
-use std::process;
-use text_io::read;
-use thiserror::Error;
 
-#[derive(Error, Debug)]
-#[error("Invalid input")]
-struct InputError;
+#[derive(Parser, Debug)]
+struct Args {
+	#[arg(short, long, required = true, num_args = 1..)]
+	numbers: Vec<u128>,
 
-type UserInput = (Vec<u128>, u128);
-
-fn take_user_input() -> Result<UserInput, InputError> {
-	print!("numbers: ");
-	let numbers_input: String = read!("{}\n");
-	let numbers = numbers_input
-		.split_whitespace()
-		.map(|s| s.parse::<u128>())
-		.collect::<Result<Vec<u128>, _>>()
-		.map_err(|_| InputError)?;
-
-	print!("target: ");
-	let target_input: String = read!();
-	let target = target_input.parse::<u128>().map_err(|_| InputError)?;
-
-	Ok((numbers, target))
+	#[arg(short, long, required = true)]
+	target: u128,
 }
 
 fn main() {
-	let (numbers, target) = take_user_input().unwrap_or_else(|error| {
-		println!("{}", error);
-		process::exit(1);
-	});
+	let args = Args::parse();
 
-	let result = find_combination(&numbers, &target);
+	let result = find_combination(&args.numbers, &args.target);
 	println!("{} == {}", result.state, result.value);
-	println!("{} off", target.abs_diff(result.value));
 }
