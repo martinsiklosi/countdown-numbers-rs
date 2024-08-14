@@ -4,7 +4,7 @@ extern crate test;
 
 #[cfg(test)]
 mod tests {
-	use countdown_numbers_rs::find_combination;
+	use countdown::find_combination;
 	use test::Bencher;
 
 	#[bench]

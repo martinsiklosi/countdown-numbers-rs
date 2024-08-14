@@ -1,4 +1,4 @@
-use countdown_numbers_rs::find_combination;
+use countdown::find_combination;
 use std::process;
 use text_io::read;
 use thiserror::Error;
